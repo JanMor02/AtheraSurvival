@@ -6,6 +6,7 @@ import org.bukkit.event.Listener;
 import net.atheramc.survival.Main;
 import net.atheramc.survival.listeners.BlockBreakListener;
 import net.atheramc.survival.listeners.EntityDamageByEntityListener;
+import net.atheramc.survival.listeners.PlayerDeathListener;
 import net.atheramc.survival.listeners.PlayerInteractListener;
 import net.atheramc.survival.listeners.PlayerItemConsumeListener;
 import net.atheramc.survival.listeners.PlayerJoinListener;
@@ -25,6 +26,7 @@ public class ListenerController {
 		registerListener(new PlayerItemConsumeListener());
 		registerListener(new PlayerJoinListener());
 		registerListener(new PlayerMoveListener());
+		registerListener(new PlayerDeathListener());
 	}
 	
 	/**
