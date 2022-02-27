@@ -12,14 +12,11 @@ package net.atheramc.survival.util.enums;
  */
 public enum Drinkables {
 
-	MILK_BUCKET(6, 5),
-	HONEY_BOTTLE(2, 1),
-	POTION(8, 6),
-	MELON_SLICE(4, 2),
-	BEETROOT_SOUP(6, 6),
-	MUSHROOM_STEW(6, 6),
-	RABBIT_STEW(10, 12),
-	SUSPICIOUS_STEW(6, 6);
+	// Consumables that give water
+	DIRTY_WATER(8, 4),
+	SALTY_WATER(8, 0),
+	BOILED_WATER(8, 8),
+	PURE_WATER(10, 12);
 	
 	private int drinkPoints;
 	private int saturation;

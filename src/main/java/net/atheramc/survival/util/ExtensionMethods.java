@@ -1,41 +1,52 @@
 package net.atheramc.survival.util;
 
-import org.bukkit.Difficulty;
+import java.util.Map;
 
-import net.atheramc.survival.util.enums.Difficulties;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
+/**
+ * Here are methods that simplify or simplify procedures in the plugin
+ * 
+ * @author Jan
+ */
 public class ExtensionMethods {
-
-	/**
-	 * Converts an org.bukkit.Difficulty-Enum to the corresponding int (0, 1, 2, 3)
-	 * 
-	 * @see org.bukkit.Difficulty
-	 * @return The corresponding int (0, 1, 2, 3) // -1 if an error occured
-	 */
-	public static int fromDifficulty(Difficulty diff) {
-		int value = -1;
-		
-		for(Difficulties difficulty : Difficulties.values())
-			value = diff == difficulty.getDifficulty() ? difficulty.getValue() : -1;
-			
-		return value;
-	}
 	
 	/**
-	 * Converts an Int (0, 1, 2, 3) to the corresponding org.bukkit.Difficulty-Enum
+	 * Lets the player consume x items
 	 * 
-	 * @see org.bukkit.Difficulty
-	 * @return The corresponding org.bukkit.Difficulty-Enum // null if an error occured
+	 * @param player Player
+	 * @param count How many items to be consumed
+	 * @param mat Material
+	 * @return True if items were removed, false if not
 	 */
-	public static Difficulty fromInt(int value) {
-		if (value == -1 || value > 3) return null;
-		
-		Difficulty diff = null;
-		
-		for(Difficulties difficulty : Difficulties.values())
-			diff = value == difficulty.getValue() ? difficulty.getDifficulty() : null;
-		
-		return diff;
+	public static boolean consumeItem(Player player, int count, Material mat) {
+	    Map<Integer, ? extends ItemStack> item = player.getInventory().all(mat);
+
+	    int found = 0;
+	    for (ItemStack stack : item.values())
+	        found += stack.getAmount();
+	    if (count > found)
+	        return false;
+
+	    for (Integer index : item.keySet()) {
+	        ItemStack stack = item.get(index);
+
+	        int removed = Math.min(count, stack.getAmount());
+	        count -= removed;
+
+	        if (stack.getAmount() == removed)
+	            player.getInventory().setItem(index, null);
+	        else
+	            stack.setAmount(stack.getAmount() - removed);
+
+	        if (count <= 0)
+	            break;
+	    }
+
+	    player.updateInventory();
+	    return true;
 	}
 	
 }

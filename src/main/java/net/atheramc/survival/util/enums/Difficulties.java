@@ -6,6 +6,7 @@ import org.bukkit.Difficulty;
  * Maps the org.bukkit.Difficulty to its corresponding integer
  */
 public enum Difficulties {
+	
 	PEACEFUL(Difficulty.PEACEFUL, 0),
 	EASY(Difficulty.EASY, 1),
 	NORMAL(Difficulty.NORMAL, 2),

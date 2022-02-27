@@ -2,26 +2,55 @@ package net.atheramc.survival.util.management;
 
 import java.util.UUID;
 
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+
 import net.atheramc.survival.Main;
 import net.atheramc.survival.util.Baseplayer;
+import net.atheramc.survival.util.DrinkItems;
+import net.atheramc.survival.util.enums.Drinkables;
 import net.atheramc.survival.util.enums.ExhaustionTypes;
 import net.atheramc.survival.util.interfaces.IThirstManagement;
 
+/**
+ * This class manages the thirst of the players
+ * 
+ * @author Jan
+ */
 public class ThirstManagement implements IThirstManagement {
 
 	/**
 	 * Adds drinkpoints und saturation to the players thirstlevel.
 	 *  
 	 * @param bp Baseplayer player
-	 * @param drinkpoints How much drinkpoints the player got
-	 * @param saturation How much saturation the player got
+	 * @param drink What the player drank
 	 */
-	public void drink(Baseplayer bp, int drinkpoints, int saturation) {
-		int newDrinkPoints = getDrinkPoints(bp) + drinkpoints <= 20 ? getDrinkPoints(bp) + drinkpoints : 20;
-		int newSaturation = getSaturation(bp) + saturation <= 20 ? getSaturation(bp) + saturation : 20;
+	public void drink(Baseplayer bp, Drinkables drink, PotionEffect effect) {
+		int newDrinkPoints = getDrinkPoints(bp) + drink.getDrinkPoints() <= 20 ? getDrinkPoints(bp) + drink.getDrinkPoints() : 20;
+		int newSaturation = getSaturation(bp) + drink.getSaturation() <= 20 ? getSaturation(bp) + drink.getSaturation() : 20;
 		
 		setConfig(bp.getPlayer().getUniqueId(), "drinkpoints", newDrinkPoints);
 		setConfig(bp.getPlayer().getUniqueId(), "saturationpoints", newSaturation);
+		// Reset exhaustion
+		setConfig(bp.getPlayer().getUniqueId(), "exhaustion", 0.0F);
+		
+		// Add statuseffect from consumed item
+		if (effect != null)
+			bp.getPlayer().addPotionEffect(effect);
+		
+		if (newDrinkPoints > 0) {
+			bp.getPlayer().removePotionEffect(PotionEffectType.POISON);
+		}
+		
+		if (newDrinkPoints > 2) {
+			bp.getPlayer().removePotionEffect(PotionEffectType.CONFUSION);
+			bp.getPlayer().removePotionEffect(PotionEffectType.BLINDNESS);
+		}
+		
+		if (newDrinkPoints > 6) {
+			bp.getPlayer().removePotionEffect(PotionEffectType.SLOW);
+			bp.getPlayer().removePotionEffect(PotionEffectType.WEAKNESS);
+		}
 	}
 
 	/**
@@ -48,13 +77,12 @@ public class ThirstManagement implements IThirstManagement {
 	 * @param exhaustion Exhaustion to be added
 	 */
 	public void addExhaustion(Baseplayer bp, ExhaustionTypes exhaustion) {
-		float newExhaustion = getExhaustion(bp) + exhaustion.getExhaustion(bp);
+		double newExhaustion = getExhaustion(bp) + exhaustion.getExhaustion(bp);
 		
-		if (newExhaustion >= 0.5F) {
+		if (newExhaustion >= 20.0) {
 			exhaust(bp);
-			newExhaustion -= 0.5F;
+			newExhaustion -= 20.0;
 		}
-	
 		setConfig(bp.getPlayer().getUniqueId(), "exhaustion", newExhaustion);
 	}
 
@@ -64,8 +92,8 @@ public class ThirstManagement implements IThirstManagement {
 	 * @param bp Baseplayer player
 	 * @return The exhaustion of the player
 	 */
-	public float getExhaustion(Baseplayer bp) {
-		return (float)Main.getInstance().getConfig().getDouble("players." + bp.getPlayer().getUniqueId() + ".exhaustion");
+	public double getExhaustion(Baseplayer bp) {
+		return Main.getInstance().getConfig().getDouble("players." + bp.getPlayer().getUniqueId() + ".exhaustion");
 	}
 
 	/**
@@ -75,7 +103,7 @@ public class ThirstManagement implements IThirstManagement {
 	 * @return The drinkpoints of the player
 	 */
 	public int getDrinkPoints(Baseplayer bp) {
-		return Main.getInstance().getConfig().getInt("players." + bp.getPlayer().getUniqueId() + "drinkpoints");	
+		return Main.getInstance().getConfig().getInt("players." + bp.getPlayer().getUniqueId() + ".drinkpoints");	
 	}
 
 	/**
@@ -85,7 +113,19 @@ public class ThirstManagement implements IThirstManagement {
 	 * @return The saturationpoints of the player
 	 */
 	public int getSaturation(Baseplayer bp) {
-		return Main.getInstance().getConfig().getInt("players." + bp.getPlayer().getUniqueId() + "saturationpoints");
+		return Main.getInstance().getConfig().getInt("players." + bp.getPlayer().getUniqueId() + ".saturationpoints");
+	}
+	
+	/**
+	 * Resets the thirst and saturation after death
+	 * 
+	 * @param bp Baseplayer player
+	 */
+	@Override
+	public void resetAfterDeath(Baseplayer bp) {
+		setConfig(bp.getPlayer().getUniqueId(), "exhaustion", 0);
+		setConfig(bp.getPlayer().getUniqueId(), "drinkpoints", 20);
+		setConfig(bp.getPlayer().getUniqueId(), "saturationpoints", 20);
 	}
 	
 	/**
@@ -96,14 +136,38 @@ public class ThirstManagement implements IThirstManagement {
 	 */
 	private void exhaust(Baseplayer bp) {
 		int newSaturation = getSaturation(bp) - 1;
-		int newDrinkPoints = newSaturation < 0 ? (getDrinkPoints(bp) - newSaturation) <= 0 ? 0 : getDrinkPoints(bp) - newSaturation : getDrinkPoints(bp); 
+		int newDrinkPoints = newSaturation < 0 ? (newSaturation + getDrinkPoints(bp)) <= 0 ? 0 : (newSaturation + getDrinkPoints(bp)) : getDrinkPoints(bp); 
+		
+		// Add effects Slowness, Weakness
+		if(newDrinkPoints <= 6 && newDrinkPoints > 2) {
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 1000000, 1), true);
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 1000000, 1), true);
+		}
+		
+		// Add effects Slowness, Weakness, Nausea and Blindness
+		if (newDrinkPoints <= 2) {
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 1000000, 1), true);
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 1000000, 1), true);
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 1000000, 1), true);
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 1), true);
+		}
+		
+		// Add effects Slowness, Weakness, Nausea, Blindness and Poison
+		if (newDrinkPoints == 0) {
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 1000000, 1), true);
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 1000000, 1), true);
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 1000000, 1), true);
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 1), true);
+			bp.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.POISON, 1000000, 1), true);
+		}
 		
 		setConfig(bp.getPlayer().getUniqueId(), "drinkpoints", newDrinkPoints);
-		setConfig(bp.getPlayer().getUniqueId(), "saturationpoints", newSaturation);
+		setConfig(bp.getPlayer().getUniqueId(), "saturationpoints", newSaturation <= 0 ? 0 : newSaturation);
 	}
 	
 	/**
 	 * Generic method to not forget to save the config
+	 * ...and that 100x more lines do not have to be written.
 	 * 
 	 * @param <T> The type of object
 	 * @param uuid UUID of the player
@@ -114,4 +178,6 @@ public class ThirstManagement implements IThirstManagement {
 		Main.getInstance().getConfig().set("players." + uuid + "." + path, obj);
 		Main.getInstance().saveConfig();
 	}
+
+
 }

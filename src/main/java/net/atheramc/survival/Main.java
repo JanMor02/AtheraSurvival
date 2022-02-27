@@ -3,15 +3,20 @@ package net.atheramc.survival;
 import java.util.HashMap;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import net.atheramc.survival.core.ListenerController;
 import net.atheramc.survival.util.Baseplayer;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
 
+/**
+ * Main class
+ * 
+ * @author Jan
+ */
 public class Main extends JavaPlugin {
 
-	static LuckPerms lp;
 	static Main instance;
 	
 	static HashMap<UUID, Baseplayer> players;
@@ -20,10 +25,14 @@ public class Main extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		instance = this;
-		lp = LuckPermsProvider.get();
 		players = new HashMap<UUID, Baseplayer>();
 		
+		for (Player all : Bukkit.getOnlinePlayers())
+			registerPlayer(all);
+		
 		loadConfig();
+		
+		new ListenerController();
 	}
 	
 	// You... should know it
@@ -50,11 +59,12 @@ public class Main extends JavaPlugin {
 	}
 	
 	/**
-	 * Get the instance of the LuckpermsAPI.
-	 * @return Instance of LuckpermsAPI
+	 * Registers a player and put it in baseplayer
+	 * 
+	 * @param p Player
 	 */
-	public static LuckPerms getLuckPerms() {
-		return lp;
+	public static void registerPlayer(Player p) {
+		players.put(p.getUniqueId(), new Baseplayer(p));
 	}
 	
 	private void loadConfig() {

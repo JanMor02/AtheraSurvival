@@ -1,5 +1,7 @@
 package net.atheramc.survival.util.enums;
 
+import org.bukkit.Difficulty;
+
 import net.atheramc.survival.util.Baseplayer;
 import net.atheramc.survival.util.ExtensionMethods;
 
@@ -13,15 +15,14 @@ import net.atheramc.survival.util.ExtensionMethods;
  */
 public enum ExhaustionTypes {
 
-	SWIMMING(0.03F), 
-	BREAK_BLOCK(0.015F),
-	SPRINTING(0.3F), JUMP(0.15F), 
-	HIT_MOB(0.3F), 
-	HUNGER_EFFECT(0.3F);
-	
-	private float exhaustion;
+	SWIMMING(0.03), 
+	BREAK_BLOCK(0.015),
+	SPRINTING(0.3),
+	HIT_MOB(0.3);
 
-	private ExhaustionTypes(float exhaustion) {
+	private double exhaustion;
+
+	private ExhaustionTypes(double exhaustion) {
 		this.exhaustion = exhaustion;
 	}
 
@@ -31,11 +32,9 @@ public enum ExhaustionTypes {
 	 * @param Baseplayer player
 	 * @return How much drinking is subtracted
 	 */
-	public float getExhaustion(Baseplayer bp) {
-		if (ExtensionMethods.fromDifficulty(bp.getPlayer().getWorld().getDifficulty()) != 0)
-			return this.exhaustion * ExtensionMethods.fromDifficulty(bp.getPlayer().getWorld().getDifficulty());
-		else
-			return 0;
+	@SuppressWarnings("deprecation")
+	public double getExhaustion(Baseplayer bp) {
+		return this.exhaustion * bp.getPlayer().getWorld().getDifficulty().getValue();
 	}
 
 }
