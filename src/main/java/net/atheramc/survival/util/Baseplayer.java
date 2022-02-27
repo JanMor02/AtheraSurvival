@@ -62,8 +62,8 @@ public class Baseplayer extends ThirstManagement {
 	private String getThirstBarString() {
 		String thirstBar[] = new String[10]; 
 		
-		String full = "§b❖";
-		String half = "§b❒";
+		String full = "§9❖";
+		String half = "§b❖";
 		String empty = "§7❖";
 		
 		// 16 -- 8
